@@ -11,6 +11,7 @@ import re
 import string
 import pandas as pd
 from flask import Flask, request, render_template 
+import json
 
 loaded_model = pickle.load(open('finalized_model.pkl', 'rb'))
 loaded_vectorizer = pickle.load(open('pikle_vectorizer.pkl', 'rb'))
@@ -45,9 +46,13 @@ def result():
     to_predict_list = request.form.to_dict()
     result = ValuePredictor(to_predict_list['news_text'])	
     if(result==0):
-        return "FAKE News"
+        ret = {'output' : 'FAKE News'}
+        ret = json.dumps(ret)
+        return ret
     else:
-        return "NOT FAKE News"
+        ret = {'output' : 'NOT FAKE News'}
+        ret = json.dumps(ret)
+        return ret
 
 if __name__ == '__main__':
     app.run()
