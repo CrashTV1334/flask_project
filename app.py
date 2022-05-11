@@ -13,8 +13,8 @@ import pandas as pd
 from flask import Flask, request, render_template 
 import json
 
-loaded_model = pickle.load(open('finalized_model.pkl', 'rb'))
-loaded_vectorizer = pickle.load(open('pikle_vectorizer.pkl', 'rb'))
+df = pd.read_csv("./fake_real_master_dataset.csv")
+fk_arr = []
 
 def wordopt(text):
     text = text.lower()
@@ -26,28 +26,38 @@ def wordopt(text):
     text = re.sub('\n', '', text)
     text = re.sub('\w*\d\w*', '', text)    
     return text
-    
-def manual_testing(news):
-    testing_news = {"text":[news]}
-    new_def_test = pd.DataFrame(testing_news)
-    new_def_test["text"] = new_def_test["text"].apply(wordopt) 
-    new_x_test = new_def_test["text"]
-    new_xv_test = loaded_vectorizer.transform(new_x_test)
-    pred_GBC = loaded_model.predict(new_xv_test)
-    return pred_GBC[0]
-# prediction function
+
+for i in range(df.shape[0]):
+  if df['fake'][i] == 0:
+    fk_txt = df['text'][i]
+    fk_txt = wordopt(fk_txt)
+    fk_txt = fk_txt.replace('\r', '')
+    fk_txt = fk_txt.replace(' ', '')
+    fk_arr.append(fk_txt)
+
+fk_arr = np.array(fk_arr)
+
+
+
 def ValuePredictor(news_text):
-	result = manual_testing(news_text)
-	return result
+    if news_text in fk_arr:
+        return 0
+    else:
+	    return 1
 
 app = Flask(__name__)
 @app.route('/', methods = ['POST'])
 def result():
     to_predict_list = request.form.to_dict()
-    result = ValuePredictor(to_predict_list['news_text'])	
+    user_news = to_predict_list['news_text']
+    user_news = wordopt(user_news)
+    user_news = user_news.replace(' ', '')
+
+    result = ValuePredictor(user_news)	
     if(result==0):
         ret = {'output' : 'FAKE News'}
         ret = json.dumps(ret)
+        print(ret)
         return ret
     else:
         ret = {'output' : 'NOT FAKE News'}
@@ -56,3 +66,5 @@ def result():
 
 if __name__ == '__main__':
     app.run()
+
+# https://flask-fake-news-api.herokuapp.com/
